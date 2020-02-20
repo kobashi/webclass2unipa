@@ -6,7 +6,8 @@
 
 　学生ポータル　https://unipa.nagoya-bunri.ac.jp/uprx/
 
-WebClass　https://webclass.nagoya-bunri.ac.jp/webclass/login.php
+　WebClass　https://webclass.nagoya-bunri.ac.jp/webclass/login.php
+
 
  データパシフィック　コース管理ウエア　Webclass
 
