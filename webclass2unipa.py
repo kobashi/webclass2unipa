@@ -7,27 +7,36 @@ import sys
 #
 # 使用方法：
 # 0. csv,pandas,xlrd,xlwt,openpyxl のライブラリをpython環境にインストールする
-# 1. WebClassから出席ファイルをダウンロードしファイル名 attendance.csv （既定）として、
+# 1. WebClassから出席ファイルをダウンロードし　例）ファイル名 src_attendance.csv として、
 #  　このスクリプトと同じフォルダに置く
-# 2. attendance.csv には15回分（回数固定）の出席データが記録されているものとする
-#    点数 10 が記録された学籍番号を出席とし、それ以外を欠席として処理する。
+# 2. src_attendance.csv には15回分（回数固定）の出席データが記録されているものとする
+# 3. 出席として変換する webclass 側のデータを変数 attend_code にセットする。
+#    それ以外は欠席として変換される。
+#    attend_code の規定値は '出'
 #    WebClassのコースに未登録の学籍番号は、全欠席として処理される。
-# 3. ユニバーサルパスポートから対応する科目の出欠登録データをダウンロードして
+# 4. ユニバーサルパスポートから対応する科目の出欠登録データをダウンロードして
 #  　このスクリプトと同じフォルダに置く
 #    ヘッダー行を含んだ形式をダウンロードすること。
-# 4. コマンドプロンプトから以下を実行
+#    例）ファイル名 dst_attendance.xlsx
+# 5. コマンドプロンプトから以下を実行
 #
-# cmd> yourpath/python webclass2unipa.py ユニバーサルパスポート出席ファイル.xlsx
+# cmd> yourpath/python webclass2unipa.py src_attendance.csv dst_attendance.xlsx
 #
-# 5. ユニバーサルパスポートにアップロード用のファイル attendance.xlxs が書き出される。
-# 6. attendance.xlxsをアップロードする。
+#    csvやxlsxのファイル名にパスを含むと出力ファイルの生成に失敗するので避ける。
+# 6. ユニバーサルパスポートにアップロードするためのファイル upload_dst_attendance.xlsx が書き出される。
+# 7. upload_dst_attendance.xlsxをアップロードする。
 
-file_name ='dummy.xlsx'
+src_file_name ='dummy.csv'
+dst_file_name ='dummy.xlsx'
+upload_file_name = 'upload_dummy.xlsx'
+attend_code ='出'
 args = sys.argv
-if 2 <= len(args):
-    file_name = args[1]
+if 3 <= len(args):
+    src_file_name = args[1]
+    dst_file_name = args[2]
 else:
     print('Arguments are too short')
+upload_file_name = 'upload_' + dst_file_name
 
 # csvからデータを抜き出してxlsxに差し込む程度の処理にはpandasは機能過剰だった。
 # xlrd と xlwt が有れば事足りる。
@@ -35,12 +44,12 @@ else:
 # pandasのDataFrameに xlsx を読み込んでいる。
 # from universal passport attends xlsx
 # 先頭行をヘッダーに用いる。インデックスは0からの連番とする。
-df = pd.read_excel('./' + file_name, header=0, index_col=None,converters={2:str,8:int})
+df = pd.read_excel('./' + dst_file_name, header=0, index_col=None,converters={2:str,8:int})
 # 先頭行を読み飛ばしてヘッダーを用いない。インデックスは0からの連番とする。
 # df = pd.read_excel('./kobashi.kazuhide_Atb003Exc01_20200219101753001.xlsx', header=None, index_col=None,skiprows=[0],converters={2:str,8:int})
 # print(df)
 
-csv_file = open("./attendance.csv", "r", encoding="ms932", errors="", newline="" )
+csv_file = open(src_file_name, "r", encoding="ms932", errors="", newline="" )
 # from webclass attends list
 f = csv.reader(csv_file, delimiter=",", doublequote=True, lineterminator="\r\n", quotechar='"', skipinitialspace=True)
 
@@ -80,7 +89,7 @@ for i,id in zip(df.index, df[df.columns[2]]):
     attends_list = attends_dict.get(id)
     if attends_list != None : #webclassに登録有り
         temp = attends_list[lec_num]
-        if temp == '10' :  #webclassの出席記録
+        if temp == attend_code :  #webclassの出席記録
             df.iat[i,8] = 0 #出席
         else:
             df.iat[i,8] = 3 #欠席
@@ -89,4 +98,9 @@ for i,id in zip(df.index, df[df.columns[2]]):
     print(i,id,df.iat[i,8])
 
 # ファイルに書き戻す
-df.to_excel('./attendance.xlsx', index=False, header=False)
+
+print('src file: ' + src_file_name)
+print('dst file: ' + dst_file_name)
+print('upload file: ' + upload_file_name)
+
+df.to_excel(upload_file_name, index=False, header=False)
